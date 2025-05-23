@@ -26,7 +26,7 @@
       display: block;
       margin-top: 15px;
     }
-    select, button {
+    select, button, input[type="text"] {
       padding: 10px;
       margin-top: 5px;
       width: 100%;
@@ -47,11 +47,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      gap: 10px;
     }
     .soal-pertanyaan {
       font-size: 18px;
-      flex: 1 1 60%;
+      flex: 1;
     }
     .soal-input {
       width: 100px;
@@ -76,12 +77,21 @@
       font-weight: bold;
     }
     @media print {
-      body * { visibility: hidden; }
-      #soal-container, #soal-container * {
-        visibility: visible;
+      body {
+        background: white;
+        color: black;
+        padding: 10mm;
       }
-      .kunci-jawaban, .status-text, .score-display, .action-buttons {
+      .container {
+        box-shadow: none;
+        border: none;
+      }
+      .action-buttons, .kunci-jawaban, .status-text, .score-display, select, label, #submitBtn, #searchBoxLabel, #searchBox {
         display: none !important;
+      }
+      input.soal-input {
+        border: 1px solid #000;
+        color: #000;
       }
     }
   </style>
@@ -119,6 +129,9 @@
     <button onclick="window.print()">Cetak</button>
   </div>
 
+  <label for="searchBox" id="searchBoxLabel">Cari Soal:</label>
+  <input type="text" id="searchBox" oninput="filterSoal()" placeholder="Ketik angka atau operasi...">
+
   <div id="soal-container"></div>
   <div id="skor" class="score-display"></div>
 </div>
@@ -136,8 +149,8 @@
     switch(materi) {
       case 'tambah': return '+';
       case 'kurang': return '-';
-      case 'kali': return 'x';
-      case 'bagi': return ':';
+      case 'kali': return '×';
+      case 'bagi': return '÷';
     }
   }
 
@@ -204,6 +217,19 @@
     }
     const nilai = Math.round((benar / jawabanBenar.length) * 100);
     document.getElementById('skor').textContent = `Nilai: ${nilai}`;
+  }
+
+  function filterSoal() {
+    const input = document.getElementById('searchBox').value.toLowerCase();
+    const soalItems = document.querySelectorAll('.soal-item');
+    soalItems.forEach(item => {
+      const pertanyaan = item.querySelector('.soal-pertanyaan').textContent.toLowerCase();
+      if (pertanyaan.includes(input)) {
+        item.style.display = '';
+      } else {
+        item.style.display = 'none';
+      }
+    });
   }
 </script>
 </body>
