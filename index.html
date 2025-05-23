@@ -47,12 +47,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 10px;
     }
     .soal-pertanyaan {
       font-size: 18px;
-      flex: 1;
+      flex: 1 1 auto;
     }
     .soal-input {
       width: 100px;
@@ -93,12 +93,42 @@
         border: 1px solid #000;
         color: #000;
       }
+      h1 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .soal-item {
+        background: none;
+        border-bottom: 1px dashed #000;
+        padding: 10px 0;
+      }
+      .soal-pertanyaan {
+        font-family: 'Times New Roman', serif;
+        font-size: 14pt;
+      }
+      #print-info {
+        display: block;
+        margin-bottom: 20px;
+      }
+    }
+    #print-info {
+      display: none;
+    }
+    #print-info div {
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
 <div class="container">
   <h1 id="judul">Latihan Soal</h1>
+
+  <div id="print-info">
+    <div>Nama: _____________________________</div>
+    <div>Tanggal: __________________________</div>
+    <div>Guru/Pengawas: ____________________</div>
+  </div>
 
   <label for="tingkat">Tingkat Kesulitan:</label>
   <select id="tingkat">
@@ -125,7 +155,7 @@
 
   <div class="action-buttons">
     <button onclick="generateSoal()">Buat Soal</button>
-    <button id="submitBtn" onclick="cekJawaban()">Selesai</button>
+    <button id="submitBtn" onclick="cekJawaban()" style="display:none;">Selesai</button>
     <button onclick="window.print()">Cetak</button>
   </div>
 
@@ -188,14 +218,23 @@
       container.innerHTML += `
         <div class="soal-item">
           <div class="soal-pertanyaan">${i + 1}. ${a} ${simbol(materi)} ${b} = </div>
-          <input class="soal-input" type="number" id="jawaban-${i}" />
+          <input class="soal-input" type="number" id="jawaban-${i}" oninput="cekInputTerisi()" />
           <span class="status-text" id="status-${i}"></span>
           <div class="kunci-jawaban" id="kunci-${i}" style="display:none;">Kunci Jawaban: ${jawaban}</div>
         </div>
       `;
     }
-    document.getElementById('submitBtn').style.display = 'inline-block';
+    document.getElementById('submitBtn').style.display = 'none';
     document.getElementById('skor').innerHTML = '';
+  }
+
+  function cekInputTerisi() {
+    const inputs = document.querySelectorAll('.soal-input');
+    let semuaTerisi = true;
+    inputs.forEach(input => {
+      if (input.value.trim() === '') semuaTerisi = false;
+    });
+    document.getElementById('submitBtn').style.display = semuaTerisi ? 'inline-block' : 'none';
   }
 
   function cekJawaban() {
