@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Latihan Soal</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+      margin: 0; padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      padding: 30px 40px;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    label {
+      display: block;
+      margin: 15px 0 8px 0;
+      font-weight: 600;
+      color: #34495e;
+    }
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #2980b9;
+      font-size: 16px;
+      color: #2c3e50;
+      cursor: pointer;
+    }
+    button {
+      margin-top: 25px;
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #1c5980;
+    }
+    #soal-container {
+      margin-top: 30px;
+      background: #f0f8ff;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: inset 0 0 10px #a9c9ff;
+    }
+    .soal-item {
+      font-size: 20px;
+      margin-bottom: 14px;
+      color: #2c3e50;
+    }
+    #print-info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    @media print {
+      button, select, label {
+        display: none !important;
+      }
+      #print-info {
+        display: block !important;
+        margin-top: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 id="judul-halaman">Latihan Soal</h1>
+
+  <label for="tingkat">Tingkat Kesulitan:</label>
+  <select id="tingkat">
+    <option value="mudah">Mudah</option>
+    <option value="sedang">Sedang</option>
+    <option value="sulit">Sulit</option>
+  </select>
+
+  <label for="jumlah">Jumlah Soal:</label>
+  <select id="jumlah">
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="15">15</option>
+  </select>
+
+  <label for="materi">Materi:</label>
+  <select id="materi">
+    <option value="penjumlahan">Penjumlahan</option>
+    <option value="pengurangan">Pengurangan</option>
+    <option value="perkalian">Perkalian</option>
+    <option value="pembagian">Pembagian</option>
+  </select>
+
+  <button id="generateBtn">Buat Soal</button>
+  <button onclick="window.print()">Cetak Soal</button>
+
+  <div id="soal-container"></div>
+  <div id="print-info"></div>
+</div>
+
+<script>
+function getRange(kesulitan) {
+  if (kesulitan === "mudah") return [1, 10];
+  if (kesulitan === "sedang") return [10, 50];
+  return [50, 100];
+}
+
+function generateUniqueSoal(jumlah, rangeMin, rangeMax, operasi) {
+  const soalSet = new Set();
+  const soalList = [];
+
+  const symbol = {
+    penjumlahan: "+",
+    pengurangan: "-",
+    perkalian: "x", // simbol aman
+    pembagian: ":"  // simbol aman
+  };
+
+  while (soalList.length < jumlah) {
+    let a = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
+    let b = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
+
+    if (operasi === "pengurangan" && b > a) [a, b] = [b, a];
+    if (operasi === "pembagian") {
+      let hasil = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
+      b = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
+      a = hasil * b;
+    }
+
+    const id = `${a}-${symbol[operasi]}-${b}`;
+    if (!soalSet.has(id)) {
+      soalSet.add(id);
+      soalList.push(`${a} ${symbol[operasi]} ${b} = ....`);
+    }
+  }
+
+  return soalList;
+}
+
+document.getElementById("generateBtn").addEventListener("click", function () {
+  const tingkat = document.getElementById("tingkat").value;
+  const jumlah = parseInt(document.getElementById("jumlah").value);
+  const materi = document.getElementById("materi").value;
+  const [min, max] = getRange(tingkat);
+
+  const soal = generateUniqueSoal(jumlah, min, max, materi);
+
+  // Update judul dinamis
+  const materiText = {
+    penjumlahan: "Penjumlahan",
+    pengurangan: "Pengurangan",
+    perkalian: "Perkalian",
+    pembagian: "Pembagian"
+  };
+  const judul = "Latihan Soal " + materiText[materi];
+  document.title = judul;
+  document.getElementById("judul-halaman").textContent = judul;
+
+  const container = document.getElementById("soal-container");
+  container.innerHTML = soal.map((s, i) => `<div class="soal-item">${i + 1}. ${s}</div>`).join("");
+
+  const now = new Date();
+  const tanggal = now.toLocaleDateString("id-ID");
+  const waktu = now.toLocaleTimeString("id-ID");
+  document.getElementById("print-info").innerHTML = `Dicetak pada: ${tanggal}, pukul ${waktu}`;
+});
+</script>
+</body>
+</html>
