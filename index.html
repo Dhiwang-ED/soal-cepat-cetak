@@ -7,83 +7,88 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
-      margin: 0; padding: 20px;
+      background: linear-gradient(to right, #bbdefb, #e3f2fd);
+      padding: 20px;
+      color: #0d47a1;
     }
     .container {
-      max-width: 700px;
-      margin: 0 auto;
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-      padding: 30px 40px;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
-      color: #2c3e50;
     }
     label {
       display: block;
-      margin: 15px 0 8px 0;
-      font-weight: 600;
-      color: #34495e;
+      margin-top: 15px;
     }
-    select {
-      width: 100%;
+    select, button {
       padding: 10px;
-      border-radius: 8px;
-      border: 2px solid #2980b9;
+      margin-top: 5px;
+      width: 100%;
       font-size: 16px;
-      color: #2c3e50;
-      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid #90caf9;
     }
     button {
-      margin-top: 25px;
-      width: 100%;
-      padding: 14px;
-      font-size: 18px;
-      background-color: #2980b9;
+      background: #1976d2;
       color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #1c5980;
-    }
-    #soal-container {
-      margin-top: 30px;
-      background: #f0f8ff;
-      padding: 20px 25px;
-      border-radius: 12px;
-      box-shadow: inset 0 0 10px #a9c9ff;
+      font-weight: bold;
     }
     .soal-item {
-      font-size: 20px;
-      margin-bottom: 14px;
-      color: #2c3e50;
+      margin-top: 20px;
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
     }
-    #print-info {
-      margin-top: 15px;
+    .soal-pertanyaan {
+      font-size: 18px;
+      flex: 1 1 60%;
+    }
+    .soal-input {
+      width: 100px;
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #90caf9;
+      border-radius: 5px;
+    }
+    .kunci-jawaban {
+      margin-top: 10px;
       font-size: 14px;
-      color: #7f8c8d;
+      font-style: italic;
+      color: green;
+    }
+    .status-text {
+      margin-left: 10px;
+      font-weight: bold;
+    }
+    .score-display {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
     }
     @media print {
-      button, select, label {
-        display: none !important;
+      body * { visibility: hidden; }
+      #soal-container, #soal-container * {
+        visibility: visible;
       }
-      #print-info {
-        display: block !important;
-        margin-top: 40px;
+      .kunci-jawaban, .status-text, .score-display, .action-buttons {
+        display: none !important;
       }
     }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1 id="judul-halaman">Latihan Soal</h1>
+  <h1 id="judul">Latihan Soal</h1>
 
   <label for="tingkat">Tingkat Kesulitan:</label>
   <select id="tingkat">
@@ -97,89 +102,109 @@
     <option value="5">5</option>
     <option value="10">10</option>
     <option value="15">15</option>
+    <option value="20">20</option>
   </select>
 
   <label for="materi">Materi:</label>
   <select id="materi">
-    <option value="penjumlahan">Penjumlahan</option>
-    <option value="pengurangan">Pengurangan</option>
-    <option value="perkalian">Perkalian</option>
-    <option value="pembagian">Pembagian</option>
+    <option value="tambah">Penjumlahan</option>
+    <option value="kurang">Pengurangan</option>
+    <option value="kali">Perkalian</option>
+    <option value="bagi">Pembagian</option>
   </select>
 
-  <button id="generateBtn">Buat Soal</button>
-  <button onclick="window.print()">Cetak Soal</button>
+  <div class="action-buttons">
+    <button onclick="generateSoal()">Buat Soal</button>
+    <button id="submitBtn" onclick="cekJawaban()">Selesai</button>
+    <button onclick="window.print()">Cetak</button>
+  </div>
 
   <div id="soal-container"></div>
-  <div id="print-info"></div>
+  <div id="skor" class="score-display"></div>
 </div>
 
 <script>
-function getRange(kesulitan) {
-  if (kesulitan === "mudah") return [1, 10];
-  if (kesulitan === "sedang") return [10, 50];
-  return [50, 100];
-}
+  let jawabanBenar = [];
 
-function generateUniqueSoal(jumlah, rangeMin, rangeMax, operasi) {
-  const soalSet = new Set();
-  const soalList = [];
+  function getRange(difficulty) {
+    if (difficulty === 'mudah') return [1, 10];
+    if (difficulty === 'sedang') return [10, 50];
+    return [50, 100];
+  }
 
-  const symbol = {
-    penjumlahan: "+",
-    pengurangan: "-",
-    perkalian: "x", // simbol aman
-    pembagian: ":"  // simbol aman
-  };
-
-  while (soalList.length < jumlah) {
-    let a = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
-    let b = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
-
-    if (operasi === "pengurangan" && b > a) [a, b] = [b, a];
-    if (operasi === "pembagian") {
-      let hasil = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
-      b = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
-      a = hasil * b;
-    }
-
-    const id = `${a}-${symbol[operasi]}-${b}`;
-    if (!soalSet.has(id)) {
-      soalSet.add(id);
-      soalList.push(`${a} ${symbol[operasi]} ${b} = ....`);
+  function simbol(materi) {
+    switch(materi) {
+      case 'tambah': return '+';
+      case 'kurang': return '-';
+      case 'kali': return 'x';
+      case 'bagi': return ':';
     }
   }
 
-  return soalList;
-}
+  function generateSoal() {
+    const tingkat = document.getElementById('tingkat').value;
+    const jumlah = parseInt(document.getElementById('jumlah').value);
+    const materi = document.getElementById('materi').value;
+    document.getElementById('judul').textContent = `Latihan Soal ${materi === 'tambah' ? 'Penjumlahan' : materi === 'kurang' ? 'Pengurangan' : materi === 'kali' ? 'Perkalian' : 'Pembagian'}`;
+    const [min, max] = getRange(tingkat);
 
-document.getElementById("generateBtn").addEventListener("click", function () {
-  const tingkat = document.getElementById("tingkat").value;
-  const jumlah = parseInt(document.getElementById("jumlah").value);
-  const materi = document.getElementById("materi").value;
-  const [min, max] = getRange(tingkat);
+    let container = document.getElementById('soal-container');
+    container.innerHTML = '';
+    jawabanBenar = [];
 
-  const soal = generateUniqueSoal(jumlah, min, max, materi);
+    const used = new Set();
+    for (let i = 0; i < jumlah; i++) {
+      let a, b, key;
+      do {
+        a = Math.floor(Math.random() * (max - min + 1)) + min;
+        b = Math.floor(Math.random() * (max - min + 1)) + min;
+        if (materi === 'bagi') b = Math.max(1, b);
+        key = `${a}-${b}`;
+      } while (used.has(key));
+      used.add(key);
 
-  // Update judul dinamis
-  const materiText = {
-    penjumlahan: "Penjumlahan",
-    pengurangan: "Pengurangan",
-    perkalian: "Perkalian",
-    pembagian: "Pembagian"
-  };
-  const judul = "Latihan Soal " + materiText[materi];
-  document.title = judul;
-  document.getElementById("judul-halaman").textContent = judul;
+      let jawaban;
+      switch (materi) {
+        case 'tambah': jawaban = a + b; break;
+        case 'kurang': jawaban = a - b; break;
+        case 'kali': jawaban = a * b; break;
+        case 'bagi': jawaban = Math.floor(a / b); a = jawaban * b; break;
+      }
 
-  const container = document.getElementById("soal-container");
-  container.innerHTML = soal.map((s, i) => `<div class="soal-item">${i + 1}. ${s}</div>`).join("");
+      jawabanBenar.push(jawaban);
+      container.innerHTML += `
+        <div class="soal-item">
+          <div class="soal-pertanyaan">${i + 1}. ${a} ${simbol(materi)} ${b} = </div>
+          <input class="soal-input" type="number" id="jawaban-${i}" />
+          <span class="status-text" id="status-${i}"></span>
+          <div class="kunci-jawaban" id="kunci-${i}" style="display:none;">Kunci Jawaban: ${jawaban}</div>
+        </div>
+      `;
+    }
+    document.getElementById('submitBtn').style.display = 'inline-block';
+    document.getElementById('skor').innerHTML = '';
+  }
 
-  const now = new Date();
-  const tanggal = now.toLocaleDateString("id-ID");
-  const waktu = now.toLocaleTimeString("id-ID");
-  document.getElementById("print-info").innerHTML = `Dicetak pada: ${tanggal}, pukul ${waktu}`;
-});
+  function cekJawaban() {
+    let benar = 0;
+    for (let i = 0; i < jawabanBenar.length; i++) {
+      const user = parseInt(document.getElementById(`jawaban-${i}`).value);
+      const status = document.getElementById(`status-${i}`);
+      const kunci = document.getElementById(`kunci-${i}`);
+
+      if (user === jawabanBenar[i]) {
+        status.textContent = 'Benar';
+        status.style.color = 'green';
+        benar++;
+      } else {
+        status.textContent = 'Salah';
+        status.style.color = 'red';
+      }
+      kunci.style.display = 'block';
+    }
+    const nilai = Math.round((benar / jawabanBenar.length) * 100);
+    document.getElementById('skor').textContent = `Nilai: ${nilai}`;
+  }
 </script>
 </body>
 </html>
